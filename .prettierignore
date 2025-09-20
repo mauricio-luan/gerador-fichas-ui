@@ -1,0 +1,9 @@
+# Arquivos de dependências
+node_modules
+
+# Arquivos de build/distribuição
+dist
+build
+
+# Logs
+*.log
