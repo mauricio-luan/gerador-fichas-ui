@@ -1,18 +1,24 @@
 <template>
-  <v-form>
-    <v-text-field label="Id do chamado" v-model="idChamado" />
-
+  <v-form ref="form">
+    <v-text-field
+      label="Id do chamado"
+      v-model="idChamado"
+      :rules="[mandatoryFieldRule]"
+    />
     <v-text-field
       label="Numero de terminais"
       v-model="numTerminais"
       type="number"
+      :rules="[mandatoryFieldRule, terminalsRule]"
     />
-
-    <v-select
-      :items="servicosCartao"
-      v-model="servicoCartaoRef"
-      label="Serviço de Cartão"
-    />
+    <v-radio-group v-model="servicoCartaoRef" :rules="[mandatoryFieldRule]">
+      <v-radio
+        v-for="servico in servicosCartao"
+        :key="servico"
+        :label="servico"
+        :value="servico"
+      />
+    </v-radio-group>
 
     <v-btn
       @click="geraFicha"
@@ -32,8 +38,9 @@ import { isEmpty } from 'vuetify/lib/util/helpers.mjs';
 const apiURL = 'http://127.0.0.1:8000/fichas';
 const idChamado = ref('');
 const numTerminais = ref(1);
-const servicoCartaoRef = ref(null);
+const servicoCartaoRef = ref('SC2');
 const isLoading = ref(false);
+const form = ref(null);
 const servicosCartao = [
   'SC2',
   'SC3',
@@ -43,30 +50,12 @@ const servicosCartao = [
   'SCS_CIELO',
 ];
 
-const returnPayload = (idChamado, numTerminais, servicoCartaoRef) => {
-  if (
-    isEmpty(idChamado) ||
-    isEmpty(numTerminais) ||
-    isEmpty(servicoCartaoRef)
-  ) {
-    throw new Error('Há campos vazios.');
-  } else {
-    numTerminais = parseInt(numTerminais);
-    if (isNaN(numTerminais)) {
-      throw new Error('O numero de terminais deve ser um numero inteiro.');
-    }
-    if (numTerminais < 1) {
-      throw new Error('O numero de terminais deve ser maior que 0.');
-    }
+const mandatoryFieldRule = (value) =>
+  isEmpty(value) ? 'Campo obrigatório' : true;
 
-    const payload = {
-      id: idChamado,
-      terminais: numTerminais,
-      servico_cartao: servicoCartaoRef,
-    };
-
-    return payload;
-  }
+const terminalsRule = (value) => {
+  value = Number(value);
+  return value < 1 ? 'O numero de terminais deve ser maior que zero' : true;
 };
 
 const returnFileName = (response) => {
@@ -94,13 +83,16 @@ const downloadFile = (response) => {
 
 const geraFicha = async () => {
   try {
+    const { valid } = await form.value.validate();
+    if (!valid) return;
+
     isLoading.value = true;
 
-    const payload = returnPayload(
-      idChamado.value,
-      numTerminais.value,
-      servicoCartaoRef.value
-    );
+    const payload = {
+      id: idChamado.value,
+      terminais: parseInt(numTerminais.value),
+      servico_cartao: servicoCartaoRef.value,
+    };
 
     const response = await axios.post(apiURL, payload, {
       responseType: 'blob',
