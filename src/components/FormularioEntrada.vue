@@ -14,7 +14,13 @@
       label="Serviço de Cartão"
     />
 
-    <v-btn @click="geraFicha" color="primary" text="Gerar ficha" />
+    <v-btn
+      @click="geraFicha"
+      color="primary"
+      text="Gerar ficha"
+      :loading="isLoading"
+      :disabled="isLoading"
+    />
   </v-form>
 </template>
 
@@ -27,6 +33,7 @@ const apiURL = 'http://127.0.0.1:8000/fichas';
 const idChamado = ref('');
 const numTerminais = ref(1);
 const servicoCartaoRef = ref(null);
+const isLoading = ref(false);
 const servicosCartao = [
   'SC2',
   'SC3',
@@ -87,11 +94,14 @@ const downloadFile = (response) => {
 
 const geraFicha = async () => {
   try {
+    isLoading.value = true;
+
     const payload = returnPayload(
       idChamado.value,
       numTerminais.value,
       servicoCartaoRef.value
     );
+
     const response = await axios.post(apiURL, payload, {
       responseType: 'blob',
     });
@@ -99,8 +109,26 @@ const geraFicha = async () => {
     downloadFile(response);
   } catch (error) {
     if (error.response) {
-      console.log(error.response.data.detail);
-      alert(error.response.data.detail);
+      if (
+        error.response.data instanceof Blob &&
+        error.response.data.type === 'application/json'
+      ) {
+        (async () => {
+          try {
+            const errorText = await error.response.data.text();
+            const errorJson = JSON.parse(errorText);
+
+            console.error('Erro API:', errorJson.detail);
+            alert(`Erro: ${errorJson.detail}`);
+          } catch (parseError) {
+            console.error('Falha ao ler a resposta de erro da API', parseError);
+            alert('Ocorreu um erro inesperado no servidor.');
+          }
+        })();
+      } else {
+        console.error('Erro API:', error.response.data);
+        alert('Ocorreu um erro na resposta do servidor.');
+      }
     } else if (error.request) {
       console.log(error.request);
       alert(error.request);
@@ -108,6 +136,8 @@ const geraFicha = async () => {
       console.log(error.message);
       alert(error.message);
     }
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>
