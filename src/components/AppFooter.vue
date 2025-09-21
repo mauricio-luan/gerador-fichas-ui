@@ -9,13 +9,10 @@
       target="_blank"
       :title="item.title"
     >
-      <v-icon :icon="item.icon" :size="item.icon === '$vuetify' ? 24 : 16" />
+      <v-icon :icon="item.icon" :size="24" />
     </a>
 
-    <div
-      class="text-caption text-disabled"
-      style="position: absolute; right: 16px"
-    >
+    <div class="text-caption text-disabled" style="position: absolute; right: 16px">
       &copy; {{ new Date().getFullYear() }}
       <span class="d-none d-sm-inline-block">Mauricio Luan</span>
       —
@@ -33,11 +30,6 @@
 
 <script setup>
 const items = [
-  {
-    title: 'Vuetify Documentation',
-    icon: `$vuetify`,
-    href: 'https://vuetifyjs.com/',
-  },
   {
     title: 'Mauricio GitHub',
     icon: `mdi-github`,
